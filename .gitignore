@@ -21,4 +21,4 @@ Thumbs.db
 .vscode/
 
 # Git LFS placeholder
-.gitattributes
+# .gitattributes should be committed when using Git LFS
