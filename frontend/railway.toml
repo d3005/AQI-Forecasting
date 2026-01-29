@@ -1,0 +1,11 @@
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+numReplicas = 1
+
+[build.buildCommand]
+value = "npm ci && npm run build"
+
+[deploy.staticDirectory]
+value = "dist"

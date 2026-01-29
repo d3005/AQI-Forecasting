@@ -1,0 +1,111 @@
+/* Header Styles */
+
+.app-header {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 70px;
+}
+
+.header-brand {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+}
+
+.header-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: var(--color-accent-gradient);
+    border-radius: var(--radius-lg);
+    color: white;
+    animation: glow 3s ease-in-out infinite;
+}
+
+.header-title h1 {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    background: var(--color-accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.header-subtitle {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    display: block;
+}
+
+.header-status {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-6);
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    padding: var(--spacing-2) var(--spacing-3);
+    background: var(--color-bg-glass);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+.status-item svg {
+    color: var(--color-text-muted);
+}
+
+.status-label {
+    font-weight: 500;
+}
+
+.model-status {
+    background: rgba(139, 92, 246, 0.1);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.model-status svg {
+    color: var(--color-accent-secondary);
+}
+
+.model-accuracy {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    padding-left: var(--spacing-2);
+    border-left: 1px solid var(--color-border);
+    margin-left: var(--spacing-2);
+}
+
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        height: auto;
+        padding: var(--spacing-4) 0;
+        gap: var(--spacing-4);
+    }
+
+    .header-status {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .header-subtitle {
+        display: none;
+    }
+}
