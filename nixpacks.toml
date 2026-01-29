@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ["python311"]
+
+[phases.install]
+cmds = ["cd AQI-RealTime-System/backend && pip install -r requirements.txt"]
+
+[start]
+cmd = "cd AQI-RealTime-System/backend && uvicorn main:app --host 0.0.0.0 --port $PORT"
