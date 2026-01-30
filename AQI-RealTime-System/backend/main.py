@@ -63,8 +63,11 @@ app.add_middleware(
         FRONTEND_URL,
         "http://localhost:3000",
         "http://localhost:5173",
-        "https://aqi-dashboard.vercel.app"  # Add your deployed frontend URL
+        "https://aqi-forecasting-index.vercel.app",
+        "https://aqi-forecasting-nine.vercel.app",
+        "https://aqi-dashboard.vercel.app",
     ],
+    allow_origin_regex=r"https://.*\.vercel\.app",  # Allow all Vercel subdomains
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
