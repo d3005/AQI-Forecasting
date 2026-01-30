@@ -1,5 +1,6 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import './App.css';
 
 // Auth
@@ -256,6 +257,7 @@ function App() {
     return (
         <AuthProvider>
             <AppContent />
+            <Analytics />
         </AuthProvider>
     );
 }
