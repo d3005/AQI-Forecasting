@@ -155,9 +155,11 @@ export const sendTestAlert = async (userEmail, userName) => {
     }
 };
 
-export default {
+const alertService = {
     sendAQIAlert,
     sendTestAlert,
     getAlertPreferences,
     saveAlertPreferences,
 };
+
+export default alertService;

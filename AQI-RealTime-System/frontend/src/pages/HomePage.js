@@ -148,7 +148,7 @@ const TrendChart = ({ data }) => {
 };
 
 function HomePage() {
-    const { userLocation, locationName, isLoadingLocation, API_URL, requestLocation } = useLocationData();
+    const { userLocation, locationName, API_URL, requestLocation } = useLocationData();
     const [currentData, setCurrentData] = useState(null);
     const [prediction, setPrediction] = useState(null);
     const [loading, setLoading] = useState(true);

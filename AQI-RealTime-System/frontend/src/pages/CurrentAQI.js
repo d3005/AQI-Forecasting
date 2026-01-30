@@ -13,6 +13,7 @@ function CurrentAQI() {
         if (userLocation) {
             fetchData();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [userLocation]);
 
     const fetchData = async () => {
