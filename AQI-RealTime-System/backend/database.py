@@ -36,7 +36,16 @@ def init_firebase():
             # Use environment variable for credentials JSON
             cred_json = os.getenv("FIREBASE_CREDENTIALS")
             if cred_json:
-                cred_dict = json.loads(cred_json)
+                # Try base64 decoding first (preferred for Railway)
+                import base64
+                try:
+                    decoded = base64.b64decode(cred_json).decode('utf-8')
+                    cred_dict = json.loads(decoded)
+                    print("[OK] Firebase credentials decoded from base64")
+                except Exception:
+                    # Fall back to raw JSON
+                    cred_dict = json.loads(cred_json)
+                    print("[OK] Firebase credentials parsed as raw JSON")
                 cred = credentials.Certificate(cred_dict)
             else:
                 print("[WARNING] No Firebase credentials found. Using mock mode.")
