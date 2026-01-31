@@ -2,138 +2,151 @@
 
 ## Overview
 
-This guide provides step-by-step instructions for deploying the Real-Time AQI Prediction System to Railway. Railway offers a streamlined deployment experience with built-in PostgreSQL support and automatic HTTPS.
+This guide provides step-by-step instructions for deploying the Real-Time AQI Prediction System using:
+- **Frontend**: Vercel (React)
+- **Backend**: Railway (FastAPI)
+- **Database**: Firebase Realtime Database
+
+---
+
+## Live Deployment URLs
+
+| Service | Platform | URL |
+|---------|----------|-----|
+| Frontend | Vercel | https://aqi-forecasting-index.vercel.app |
+| Backend | Railway | https://aqi-forecasting-production.up.railway.app |
+| Database | Firebase | Realtime Database |
+
+---
 
 ## Prerequisites
 
-1. **Railway Account**: Sign up at [railway.app](https://railway.app)
-2. **GitHub Account**: For repository connection
-3. **OpenWeatherMap API Key**: Get from [openweathermap.org/api](https://openweathermap.org/api)
+1. **GitHub Account**: For repository connection
+2. **Vercel Account**: Sign up at [vercel.com](https://vercel.com)
+3. **Railway Account**: Sign up at [railway.app](https://railway.app)
+4. **Firebase Project**: Create at [console.firebase.google.com](https://console.firebase.google.com)
+5. **API Keys**:
+   - WAQI: [aqicn.org/data-platform/token](https://aqicn.org/data-platform/token)
+   - Ambee: [api.ambee.com](https://api.ambee.com)
+   - OpenWeatherMap: [openweathermap.org/api](https://openweathermap.org/api)
 
-## Project Structure
+---
 
-Ensure your repository has the following structure:
+## Architecture
 
 ```
-AQI_Index/
-├── backend/
-│   ├── app/
-│   │   ├── main.py
-│   │   ├── config.py
-│   │   ├── database.py
-│   │   ├── models/
-│   │   ├── schemas/
-│   │   ├── routers/
-│   │   ├── services/
-│   │   └── ml/
-│   ├── requirements.txt
-│   ├── Procfile
-│   └── railway.toml
-├── frontend/
-│   ├── src/
-│   ├── package.json
-│   ├── vite.config.js
-│   └── railway.toml
-└── docs/
+┌─────────────────────────────────────────────────────────────────┐
+│                      Production Architecture                     │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   Firebase      │  │    Railway      │  │     Vercel      │ │
+│  │   (Database)    │  │   (Backend)     │  │   (Frontend)    │ │
+│  │                 │  │                 │  │                 │ │
+│  │ Realtime DB     │  │ FastAPI + ML    │  │ React App       │ │
+│  │ Authentication  │  │ GA-KELM Model   │  │ Dashboard       │ │
+│  │                 │  │ Scheduler       │  │                 │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+│          │                    │                    │            │
+│          └────────────────────┼────────────────────┘            │
+│                    HTTPS / REST                                  │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-## Step 1: Create Railway Project
+---
+
+## Step 1: Firebase Setup
+
+### 1.1 Create Firebase Project
+
+1. Go to [Firebase Console](https://console.firebase.google.com)
+2. Click **"Add project"**
+3. Enter project name: `aqi-forecasting`
+4. Disable Google Analytics (optional)
+5. Click **Create project**
+
+### 1.2 Enable Realtime Database
+
+1. In Firebase Console, go to **Build → Realtime Database**
+2. Click **"Create Database"**
+3. Choose location (e.g., `us-central1`)
+4. Start in **test mode** (we'll secure later)
+5. Copy the database URL: `https://your-project-default-rtdb.firebaseio.com`
+
+### 1.3 Enable Google Authentication
+
+1. Go to **Build → Authentication**
+2. Click **"Get started"**
+3. Go to **Sign-in method** tab
+4. Enable **Google** provider
+5. Enter your project support email
+6. Click **Save**
+
+### 1.4 Get Service Account Key
+
+1. Go to **Project Settings → Service accounts**
+2. Click **"Generate new private key"**
+3. Download the JSON file
+4. Convert to base64 (for Railway):
+
+**PowerShell:**
+```powershell
+[Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes((Get-Content -Path "path\to\serviceAccountKey.json" -Raw)))
+```
+
+**Linux/Mac:**
+```bash
+base64 -i path/to/serviceAccountKey.json
+```
+
+### 1.5 Get Web App Config
+
+1. Go to **Project Settings → General**
+2. Under "Your apps", click **Add app → Web**
+3. Register app with name: `AQI Dashboard`
+4. Copy the Firebase config object
+
+---
+
+## Step 2: Deploy Backend to Railway
+
+### 2.1 Create Railway Project
 
 1. Log in to [Railway Dashboard](https://railway.app/dashboard)
 2. Click **"New Project"**
 3. Select **"Deploy from GitHub repo"**
 4. Authorize Railway to access your repository
-5. Select the `AQI_Index` repository
+5. Select the `AQI-Forecasting` repository
 
-## Step 2: Configure PostgreSQL Database
+### 2.2 Configure Deployment
 
-1. In your Railway project, click **"+ New"**
-2. Select **"Database" → "Add PostgreSQL"**
-3. Railway will automatically provision a PostgreSQL instance
-4. Click on the PostgreSQL service to view connection details
-5. Copy the `DATABASE_URL` (it will look like: `postgresql://postgres:xxx@xxx.railway.internal:5432/railway`)
+Railway will detect the Dockerfile in the root directory. Verify:
+- **Builder**: Dockerfile
+- **Dockerfile Path**: `Dockerfile`
 
-## Step 3: Deploy Backend Service
+### 2.3 Set Environment Variables
 
-### 3.1 Create Backend Service
-
-1. Click **"+ New" → "GitHub Repo"**
-2. Select your repository
-3. Configure the service:
-   - **Root Directory**: `backend`
-   - **Watch Path**: `backend/**`
-
-### 3.2 Configure Environment Variables
-
-In the backend service settings, add these variables:
+In Railway service settings, add these variables:
 
 | Variable | Value | Required |
 |----------|-------|----------|
-| `DATABASE_URL` | Copy from PostgreSQL service | ✅ |
-| `OPENWEATHERMAP_API_KEY` | Your API key | ✅ |
-| `SECRET_KEY` | Generate a random string | ✅ |
-| `CORS_ORIGINS` | `https://your-frontend.up.railway.app` | ✅ |
-| `DEBUG` | `false` | ✅ |
-| `AQICN_API_TOKEN` | Optional backup API token | ❌ |
-| `DATA_FETCH_INTERVAL_MINUTES` | `15` | ❌ |
-| `MODEL_RETRAIN_INTERVAL_HOURS` | `24` | ❌ |
-| `DEFAULT_CITY` | `Delhi` | ❌ |
-| `DEFAULT_COUNTRY` | `India` | ❌ |
-| `DEFAULT_LATITUDE` | `28.6139` | ❌ |
-| `DEFAULT_LONGITUDE` | `77.2090` | ❌ |
+| `FIREBASE_URL` | `https://your-project-default-rtdb.firebaseio.com` | ✅ |
+| `FIREBASE_CREDENTIALS` | Base64-encoded service account JSON | ✅ |
+| `WAQI_API_KEY` | Your WAQI API token | ✅ |
+| `AMBEE_API_KEY` | Your Ambee API key | ✅ |
+| `API_KEY` | Your OpenWeatherMap API key | ✅ |
+| `FRONTEND_URL` | `https://your-frontend.vercel.app` | ✅ |
+| `LATITUDE` | Default latitude (e.g., `15.5057`) | ❌ |
+| `LONGITUDE` | Default longitude (e.g., `80.0499`) | ❌ |
 
-**Important**: For `DATABASE_URL`, modify the URL from PostgreSQL:
-- Change `postgresql://` to `postgresql+asyncpg://`
-- If using internal networking, use the internal URL
-
-Example:
-```
-# From Railway PostgreSQL
-postgresql://postgres:xxx@containers-xxx.railway.internal:6969/railway
-
-# Your DATABASE_URL
-postgresql+asyncpg://postgres:xxx@containers-xxx.railway.internal:6969/railway
-```
-
-### 3.3 Generate Domain
+### 2.4 Generate Domain
 
 1. Go to **Settings → Networking**
 2. Click **"Generate Domain"**
-3. Note the URL (e.g., `aqi-backend.up.railway.app`)
+3. Note the URL (e.g., `aqi-forecasting-production.up.railway.app`)
 
-## Step 4: Deploy Frontend Service
-
-### 4.1 Create Frontend Service
-
-1. Click **"+ New" → "GitHub Repo"**
-2. Select your repository
-3. Configure the service:
-   - **Root Directory**: `frontend`
-   - **Watch Path**: `frontend/**`
-
-### 4.2 Configure Environment Variables
-
-| Variable | Value |
-|----------|-------|
-| `VITE_API_URL` | `https://your-backend.up.railway.app` |
-| `VITE_WS_URL` | `wss://your-backend.up.railway.app` |
-
-### 4.3 Generate Domain
-
-1. Go to **Settings → Networking**
-2. Click **"Generate Domain"**
-3. Note the URL (e.g., `aqi-dashboard.up.railway.app`)
-
-### 4.4 Update Backend CORS
-
-Go back to the backend service and update `CORS_ORIGINS`:
-```
-https://aqi-dashboard.up.railway.app
-```
-
-## Step 5: Verify Deployment
-
-### 5.1 Check Backend Health
+### 2.5 Verify Backend
 
 Visit: `https://your-backend.up.railway.app/health`
 
@@ -141,146 +154,180 @@ Expected response:
 ```json
 {
   "status": "healthy",
-  "version": "1.0.0",
+  "database": true,
+  "model_trained": true,
   "scheduler_running": true
 }
 ```
 
-### 5.2 Check API Documentation
+---
 
-Visit: `https://your-backend.up.railway.app/docs`
+## Step 3: Deploy Frontend to Vercel
 
-You should see the FastAPI Swagger documentation.
+### 3.1 Import Project
 
-### 5.3 Check Frontend
+1. Log in to [Vercel Dashboard](https://vercel.com/dashboard)
+2. Click **"Add New → Project"**
+3. Import your GitHub repository
+4. Configure:
+   - **Framework Preset**: Create React App
+   - **Root Directory**: `AQI-RealTime-System/frontend`
 
-Visit: `https://your-frontend.up.railway.app`
+### 3.2 Set Environment Variables
 
-You should see the AQI Dashboard with real-time data.
+| Variable | Value |
+|----------|-------|
+| `REACT_APP_API_URL` | `https://your-backend.up.railway.app` |
 
-## Step 6: Monitor & Troubleshoot
+### 3.3 Deploy
 
-### View Logs
+Click **"Deploy"** and wait for build to complete.
 
-1. Click on a service in Railway
-2. Go to the **"Logs"** tab
-3. View real-time logs
+### 3.4 Note Your Domain
 
-### Common Issues
+After deployment, note your Vercel domain (e.g., `aqi-forecasting-index.vercel.app`)
+
+---
+
+## Step 4: Connect Everything
+
+### 4.1 Update Railway FRONTEND_URL
+
+Go back to Railway and update:
+- `FRONTEND_URL` = `https://your-vercel-domain.vercel.app`
+
+### 4.2 Add Vercel Domain to Firebase
+
+1. Go to Firebase Console → **Authentication → Settings**
+2. Under **Authorized domains**, click **"Add domain"**
+3. Add: `your-vercel-domain.vercel.app`
+4. Save
+
+### 4.3 Verify End-to-End
+
+1. Visit your Vercel frontend URL
+2. Click **"Continue with Google"**
+3. Sign in with your Google account
+4. You should see the AQI Dashboard with live data
+
+---
+
+## Step 5: Configure EmailJS (Optional)
+
+### 5.1 Create EmailJS Account
+
+1. Sign up at [emailjs.com](https://www.emailjs.com)
+2. Add Gmail as email service
+3. Create email template with variables:
+   - `{{email}}` - Recipient email
+   - `{{user_name}}` - User name
+   - `{{aqi}}` - Current AQI value
+   - `{{location}}` - Location name
+   - `{{category}}` - AQI category
+
+### 5.2 Update AlertService
+
+Edit `frontend/src/services/alertService.js`:
+```javascript
+const EMAILJS_SERVICE_ID = 'your_service_id';
+const EMAILJS_TEMPLATE_ID = 'your_template_id';
+const EMAILJS_PUBLIC_KEY = 'your_public_key';
+```
+
+---
+
+## Troubleshooting
+
+### Backend Issues
+
+#### "Invalid JWT Signature" Error
+- Re-generate Firebase service account key
+- Ensure base64 encoding is correct
+- Paste entire base64 string without line breaks
 
 #### Database Connection Failed
-- Verify `DATABASE_URL` uses `postgresql+asyncpg://`
-- Check if PostgreSQL service is running
-- Verify internal networking is enabled
-
-#### API Key Errors
-- Check `OPENWEATHERMAP_API_KEY` is correctly set
-- Verify API key is active at openweathermap.org
+- Verify `FIREBASE_URL` is correct
+- Check Firebase Realtime Database is enabled
+- Ensure service account has database access
 
 #### CORS Errors
-- Ensure frontend URL is in `CORS_ORIGINS`
+- Verify `FRONTEND_URL` matches your Vercel domain
 - Include `https://` in the URL
+- Redeploy backend after changing CORS settings
 
-#### WebSocket Connection Failed
-- Verify `VITE_WS_URL` uses `wss://` (not `ws://`)
-- Check backend is accepting WebSocket connections
+### Frontend Issues
 
-## Step 7: Custom Domain (Optional)
+#### "auth/unauthorized-domain" Error
+- Add your Vercel domain to Firebase Authorized domains
+- Wait a few minutes for propagation
 
-### Configure Custom Domain
+#### API Data Not Loading
+- Check `REACT_APP_API_URL` is set correctly
+- Include `https://` in the URL
+- Redeploy frontend after changing env variables
 
-1. Go to service **Settings → Networking**
-2. Click **"Custom Domain"**
-3. Enter your domain (e.g., `aqi.yourdomain.com`)
-4. Add the CNAME record in your DNS provider:
-   ```
-   Type: CNAME
-   Name: aqi
-   Value: your-service.up.railway.app
-   ```
-5. Wait for DNS propagation
-
-### Update Environment Variables
-
-After setting custom domain, update:
-- Backend `CORS_ORIGINS` with new frontend URL
-- Frontend `VITE_API_URL` and `VITE_WS_URL` with new backend URL
-
-## Architecture on Railway
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                      Railway Project                             │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
-│  │   PostgreSQL    │  │    Backend      │  │   Frontend      │ │
-│  │   (Database)    │  │   (FastAPI)     │  │   (React+Vite)  │ │
-│  │                 │  │                 │  │                 │ │
-│  │ Railway Plugin  │  │ Root: /backend  │  │ Root: /frontend │ │
-│  │                 │  │                 │  │                 │ │
-│  │ Internal URL:   │  │ Domain:         │  │ Domain:         │ │
-│  │ containers-xxx  │  │ aqi-backend     │  │ aqi-dashboard   │ │
-│  │ .railway.internal│ │ .up.railway.app │  │ .up.railway.app │ │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
-│          │                    │                    │            │
-│          └────────────────────┼────────────────────┘            │
-│                    Internal Network                              │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-## Cost Estimation
-
-Railway's pricing (as of 2024):
-- **Hobby Plan**: $5/month includes $5 usage credits
-- **Pro Plan**: $20/month includes $20 usage credits
-
-Estimated monthly usage:
-- PostgreSQL: ~$3-5
-- Backend: ~$5-10 (depends on traffic)
-- Frontend: ~$2-3 (static hosting)
-
-**Total**: ~$10-20/month
-
-## Security Checklist
-
-- [ ] Use HTTPS for all endpoints
-- [ ] Set strong `SECRET_KEY`
-- [ ] Never commit `.env` files
-- [ ] Enable Railway private networking
-- [ ] Review CORS settings
-- [ ] Set `DEBUG=false` in production
+---
 
 ## Maintenance
 
 ### Automatic Updates
-Railway automatically redeploys when you push to your GitHub repository.
+Both Vercel and Railway automatically redeploy when you push to GitHub.
 
 ### Manual Redeploy
+
+**Railway:**
 1. Go to service settings
 2. Click **"Redeploy"**
 
-### Database Backups
-Railway PostgreSQL includes automatic backups. To export:
-```bash
-pg_dump $DATABASE_URL > backup.sql
-```
+**Vercel:**
+1. Go to Deployments
+2. Click ⋮ menu → **"Redeploy"**
 
-### Scaling
-To handle more traffic:
-1. Go to service settings
-2. Adjust **Replicas** count
-3. Configure **Health Checks**
+### Viewing Logs
+
+**Railway:** Click on service → **"Logs"** tab
+
+**Vercel:** Deployments → Click deployment → **"Functions"** tab
+
+---
+
+## Security Checklist
+
+- [x] Use HTTPS for all endpoints
+- [x] Never commit credentials to git
+- [x] Use environment variables for secrets
+- [x] Enable Firebase security rules
+- [x] Add only required domains to Firebase auth
+- [x] Set `DEBUG=false` in production
+
+---
+
+## Cost Estimation
+
+### Free Tier Limits
+
+| Service | Free Tier |
+|---------|-----------|
+| Vercel | 100GB bandwidth/month |
+| Railway | $5 credit/month |
+| Firebase | 1GB database, 50k reads/day |
+| WAQI | 1000 requests/day |
+| Ambee | 10 requests/min |
+| OpenWeatherMap | 1000 requests/day |
+| EmailJS | 200 emails/month |
+
+### Estimated Monthly Cost
+
+For typical usage: **$0-5/month** (mostly free tier)
 
 ---
 
 ## Quick Reference
 
-| Service | URL Pattern |
-|---------|-------------|
-| Backend API | `https://your-backend.up.railway.app/api/v1/` |
-| API Docs | `https://your-backend.up.railway.app/docs` |
-| Health Check | `https://your-backend.up.railway.app/health` |
-| WebSocket | `wss://your-backend.up.railway.app/ws/aqi/{id}` |
-| Frontend | `https://your-frontend.up.railway.app` |
+| Resource | URL |
+|----------|-----|
+| Frontend | https://aqi-forecasting-index.vercel.app |
+| Backend API | https://aqi-forecasting-production.up.railway.app |
+| Health Check | https://aqi-forecasting-production.up.railway.app/health |
+| Current AQI | https://aqi-forecasting-production.up.railway.app/current |
+| Prediction | https://aqi-forecasting-production.up.railway.app/predict |

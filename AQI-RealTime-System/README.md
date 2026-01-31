@@ -10,7 +10,19 @@
 
 **Real-time air quality prediction using Genetic Algorithm optimized Kernel Extreme Learning Machine**
 
+[Live Demo](https://aqi-forecasting-index.vercel.app) • [API](https://aqi-forecasting-production.up.railway.app/health)
+
 </div>
+
+---
+
+## 🌐 Live Deployment
+
+| Service | Platform | URL |
+|---------|----------|-----|
+| **Frontend** | Vercel | [aqi-forecasting-index.vercel.app](https://aqi-forecasting-index.vercel.app) |
+| **Backend** | Railway | [aqi-forecasting-production.up.railway.app](https://aqi-forecasting-production.up.railway.app) |
+| **Database** | Firebase | Realtime Database |
 
 ---
 
