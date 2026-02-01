@@ -14,6 +14,7 @@ import AdminPage from './pages/AdminPage';
 
 // Components
 import AlertSettings from './components/AlertSettings';
+import AIAdvisor from './components/AIAdvisor';
 
 // Create Location Context
 export const LocationContext = createContext();
@@ -51,6 +52,7 @@ function AppContent() {
     const [isLoadingLocation, setIsLoadingLocation] = useState(true);
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [showAlertSettings, setShowAlertSettings] = useState(false);
+    const [showAIAdvisor, setShowAIAdvisor] = useState(false);
     const location = useLocation();
 
     // Request user's location on mount or when user logs in
@@ -189,6 +191,9 @@ function AppContent() {
                                         <div className="menu-header">
                                             <span className="menu-email">{user.email}</span>
                                         </div>
+                                        <button className="menu-item" onClick={() => { setShowAIAdvisor(true); setShowUserMenu(false); }}>
+                                            🤖 AI Health Advisor
+                                        </button>
                                         <button className="menu-item" onClick={() => { setShowAlertSettings(true); setShowUserMenu(false); }}>
                                             🔔 Alert Settings
                                         </button>
@@ -210,6 +215,14 @@ function AppContent() {
                 {/* Alert Settings Modal */}
                 {showAlertSettings && (
                     <AlertSettings onClose={() => setShowAlertSettings(false)} />
+                )}
+
+                {/* AI Advisor Modal */}
+                {showAIAdvisor && (
+                    <AIAdvisor
+                        userLocation={userLocation}
+                        onClose={() => setShowAIAdvisor(false)}
+                    />
                 )}
 
                 {/* Location Error Banner */}

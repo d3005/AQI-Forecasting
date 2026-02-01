@@ -29,6 +29,7 @@ from database import (
 )
 from model import predict_aqi, predict_from_data, train_model, get_model, get_model_info
 from scheduler import start_scheduler, stop_scheduler, scheduler
+from gemini_service import init_gemini, get_health_advice, get_smart_alert_message
 
 load_dotenv()
 
@@ -42,6 +43,7 @@ async def lifespan(app: FastAPI):
     # Startup
     print("[START] Starting AQI Prediction Server...")
     test_connection()
+    init_gemini()  # Initialize Gemini AI
     start_scheduler()
     yield
     # Shutdown
@@ -96,6 +98,46 @@ def health():
         "model_trained": model.is_trained,
         "scheduler_running": scheduler.is_running
     }
+
+
+# ============ AI ENDPOINTS ============
+
+@app.get("/ai/advice")
+def get_ai_advice(lat: float = None, lon: float = None):
+    """Get AI-powered health advice based on current AQI"""
+    try:
+        # Fetch current data
+        current = fetch_data(lat=lat, lon=lon)
+        
+        aqi = current.get("aqi", 0)
+        category = current.get("category", "Unknown")
+        location = current.get("station", "Unknown Location")
+        weather = current.get("weather", {})
+        
+        # Get AI advice
+        advice = get_health_advice(aqi, category, location, weather)
+        
+        return {
+            "success": True,
+            "aqi": aqi,
+            "category": category,
+            "location": location,
+            "advice": advice.get("advice", ""),
+            "ai_powered": advice.get("success", False)
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/ai/alert")
+def get_smart_alert(aqi: int, category: str, location: str, threshold: int = 150):
+    """Get AI-generated alert message"""
+    try:
+        alert = get_smart_alert_message(aqi, category, location, threshold)
+        return alert
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/update")
