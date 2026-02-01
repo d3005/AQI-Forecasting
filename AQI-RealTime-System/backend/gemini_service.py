@@ -3,9 +3,17 @@ Gemini AI Service
 Provides AI-powered health recommendations based on AQI data
 """
 
-import google.generativeai as genai
 import os
 from dotenv import load_dotenv
+
+# Try to import Gemini (fail gracefully if not installed)
+try:
+    import google.generativeai as genai
+    GEMINI_AVAILABLE = True
+except ImportError:
+    print("[WARNING] google-generativeai not installed. AI features disabled.")
+    GEMINI_AVAILABLE = False
+    genai = None
 
 load_dotenv()
 
@@ -14,12 +22,17 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 def init_gemini():
     """Initialize Gemini API"""
+    if not GEMINI_AVAILABLE:
+        print("[WARNING] Gemini package not installed. AI features disabled.")
+        return False
+    
     if not GEMINI_API_KEY:
         print("[WARNING] GEMINI_API_KEY not set. AI features disabled.")
         return False
     
     try:
         genai.configure(api_key=GEMINI_API_KEY)
+        print("[OK] Gemini AI initialized successfully!")
         return True
     except Exception as e:
         print(f"[ERROR] Gemini initialization failed: {e}")
@@ -39,7 +52,7 @@ def get_health_advice(aqi: int, category: str, location: str, weather: dict = No
     Returns:
         dict with 'success', 'advice', and 'recommendations' keys
     """
-    if not GEMINI_API_KEY:
+    if not GEMINI_AVAILABLE or not GEMINI_API_KEY:
         return {
             "success": False,
             "error": "AI service not configured",
@@ -181,7 +194,7 @@ def get_smart_alert_message(aqi: int, category: str, location: str, threshold: i
     Returns:
         dict with alert subject and body
     """
-    if not GEMINI_API_KEY:
+    if not GEMINI_AVAILABLE or not GEMINI_API_KEY:
         return {
             "success": False,
             "subject": f"AQI Alert: {category} in {location}",
