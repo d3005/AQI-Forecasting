@@ -219,9 +219,10 @@ def get_history(limit: int = 24):
     try:
         data = get_historical_data(limit)
         
-        # Convert ObjectIds to strings
+        # Safely convert _id to string
         for record in data:
-            record["_id"] = str(record["_id"])
+            if "_id" in record:
+                record["_id"] = str(record["_id"])
         
         return {
             "count": len(data),
@@ -281,6 +282,31 @@ def get_prediction_history(limit: int = 24):
         return {
             "count": len(data),
             "predictions": data
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/stats")
+def get_stats():
+    """Get 24h AQI statistics (min, max, avg, count)"""
+    try:
+        data = get_historical_data(96)  # Last ~24h at 15min intervals
+        
+        aqi_values = [
+            r.get("aqi") for r in data
+            if r.get("aqi") and isinstance(r.get("aqi"), (int, float)) and r.get("aqi") > 0
+        ]
+        
+        if not aqi_values:
+            return {"min": None, "max": None, "avg": None, "count": 0}
+        
+        return {
+            "min": round(min(aqi_values)),
+            "max": round(max(aqi_values)),
+            "avg": round(sum(aqi_values) / len(aqi_values)),
+            "count": len(aqi_values)
         }
         
     except Exception as e:
