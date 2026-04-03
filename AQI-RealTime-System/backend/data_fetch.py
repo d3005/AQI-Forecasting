@@ -12,9 +12,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # API Keys
-OPENWEATHERMAP_KEY = os.getenv("API_KEY")
+OPENWEATHERMAP_KEY = os.getenv("API_KEY", "5ef32fde1c1415126d7843b8e69aa032")
 WAQI_API_KEY = os.getenv("WAQI_API_KEY", "c573cdb300b84975dd16d507414ec2dc84804d22")
-AMBEE_API_KEY = os.getenv("AMBEE_API_KEY", "c85176e0b52f74d7ac727fbd6d0277c7bb16cac82bd9a23fc7958fe125723706")
+AMBEE_API_KEY = os.getenv("AMBEE_API_KEY", "7ca5e8fe647244d5d5f364238c0d63cfdd842abd32faa110434a9a4c2acef9d9")
 
 LATITUDE = float(os.getenv("LATITUDE", "15.5057"))  # Ongole default
 LONGITUDE = float(os.getenv("LONGITUDE", "80.0499"))

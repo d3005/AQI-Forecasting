@@ -9,7 +9,7 @@ from model import train_model, get_model_info, get_model
 from database import save_data
 
 # ============ API KEYS ============
-AMBEE_API_KEY = "c85176e0b52f74d7ac727fbd6d0277c7bb16cac82bd9a23fc7958fe125723706"
+AMBEE_API_KEY = "7ca5e8fe647244d5d5f364238c0d63cfdd842abd32faa110434a9a4c2acef9d9"
 WAQI_API_KEY = "c573cdb300b84975dd16d507414ec2dc84804d22"
 AZURE_MAPS_KEY = None  # Set this if you have Azure Maps subscription
 
