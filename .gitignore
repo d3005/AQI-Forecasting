@@ -22,3 +22,4 @@ Thumbs.db
 
 # Git LFS placeholder
 # .gitattributes should be committed when using Git LFS
+firebase-credentials.json
